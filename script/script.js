@@ -1,3 +1,4 @@
+// Глобальный обработчик событий
 document.addEventListener('DOMContentLoaded', function () {
   'use strict';
 
@@ -10,7 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
     burgerBtn = document.getElementById('burger'),
     prevButton = document.querySelector('#prev'),
     nextButton = document.querySelector('#next'),
-    modalDialog = document.querySelector('.modal-dialog');
+    modalDialog = document.querySelector('.modal-dialog'),
+    sendButton = document.querySelector('#send'),
+    modalTitle = document.querySelector('.modal-title');
 
   // Массив вопросов
   const questions = [
@@ -97,10 +100,17 @@ document.addEventListener('DOMContentLoaded', function () {
     burgerBtn.style.display = 'none';
   }
 
-  // Прохождение опроса
+  // Запуск тестирования
   const playTest = () => {
-    let numberQuestion = 0;
 
+    const finalAnswers = [];
+    const obj = {};
+
+    // Переменная с номером вопроса
+    let numberQuestion = 0;
+    modalTitle.textContent = 'Ответь на вопрос:'
+
+    // Функция рендеринга ответов
     const renderAnswers = (index) => {
       questions[index].answers.forEach((answer) => {
 
@@ -108,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         answerItem.classList.add('answers-item', 'd-flex', 'justify-content-center');
         answerItem.innerHTML = `
-          <input type="${questions[index].type}" id="${answer.title}"      name="answer" class="d-none">
+          <input type="${questions[index].type}" id="${answer.title}"      name="answer" class="d-none" value="${answer.title}" >
           <label for="${answer.title}" class="d-flex flex-column justify-content-between">
           <img class="answerImg" src="${answer.url}" alt="burger">
           <span>${answer.title}</span>
@@ -118,14 +128,76 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
+    // Функция рендеринга вопросов + ответов
     const renderQuestions = (indexQuestion) => {
       formAnswers.innerHTML = '';
-      questionTitle.textContent = `${questions[indexQuestion].question}`;
-      renderAnswers(indexQuestion);
-    }
+
+      if (numberQuestion >= 0 && numberQuestion <= questions.length - 1) {
+        questionTitle.textContent = `${questions[indexQuestion].question}`;
+        renderAnswers(indexQuestion);
+        nextButton.classList.remove('d-none');
+        prevButton.classList.remove('d-none');
+        sendButton.classList.add('d-none');
+      }
+
+      if (numberQuestion === 0) {
+        prevButton.classList.add('d-none');
+      }
+
+      if (numberQuestion === questions.length) {
+        questionTitle.textContent = '';
+        modalTitle.textContent = '';
+        nextButton.classList.add('d-none');
+        prevButton.classList.add('d-none');
+        sendButton.classList.remove('d-none');
+        formAnswers.innerHTML = `
+          <div class="form-group">
+            <label for="numberPhone">Enter your number</label>
+            <input type="phone" class="form-control" id="numberPhone">
+          </div>
+        `;
+        const numberPhone = document.getElementById('numberPhone');
+        numberPhone.addEventListener('input', (event) => {
+          event.target.value = event.target.value.replace(/[^0-9+-]/, '')
+        });
+      }
+
+      if (numberQuestion === questions.length + 1) {
+        formAnswers.textContent = 'Спасибо за пройденный тест!';
+        sendButton.classList.add('d-none');
+
+        for (let key in obj) {
+          let newObj = {};
+          newObj[key] = obj[key];
+          finalAnswers.push(newObj);
+        }
+
+        setTimeout(() => {
+          modalBlock.classList.remove('d-block');
+        }, 2000);
+      }
+    };
+
+    // Запуск функции рендеринга
     renderQuestions(numberQuestion);
 
+    const checkAnswer = () => {
+      const inputs = [...formAnswers.elements].filter((input) => input.checked || input.id === 'numberPhone');
+
+      inputs.forEach((input, index) => {
+        if (numberQuestion >= 0 && numberQuestion <= questions.length - 1) {
+          obj[`${index}_${questions[numberQuestion].question}`] = input.value;
+        }
+
+        if (numberQuestion === questions.length) {
+          obj['Номер телефона'] = input.value;
+        }
+      });
+    };
+
+    // Обработчики событий кнопок next и prev
     nextButton.onclick = () => {
+      checkAnswer();
       numberQuestion++;
       renderQuestions(numberQuestion);
     };
@@ -133,11 +205,14 @@ document.addEventListener('DOMContentLoaded', function () {
       numberQuestion--;
       renderQuestions(numberQuestion);
     };
-
+    sendButton.onclick = () => {
+      checkAnswer();
+      numberQuestion++;
+      renderQuestions(numberQuestion);
+    }
   };
 
   // Появление-исчезание кнопки-бургера (проверка при изменении экрана)
-
   window.addEventListener('resize', () => {
     clientWidth = document.documentElement.clientWidth;
 
@@ -195,7 +270,5 @@ document.addEventListener('DOMContentLoaded', function () {
       burgerBtn.classList.remove('active');
     }
   });
-
-
 
 });
