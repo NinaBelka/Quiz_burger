@@ -14,82 +14,33 @@ document.addEventListener('DOMContentLoaded', function () {
     modalDialog = document.querySelector('.modal-dialog'),
     sendButton = document.querySelector('#send'),
     modalTitle = document.querySelector('.modal-title');
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyC48UPXaHjwOKxlWC1nE8eJxH_0BtuyWi4",
+    authDomain: "burger-c251a.firebaseapp.com",
+    databaseURL: "https://burger-c251a.firebaseio.com",
+    projectId: "burger-c251a",
+    storageBucket: "burger-c251a.appspot.com",
+    messagingSenderId: "71664721604",
+    appId: "1:71664721604:web:b92e9ba5024bea47c0b391",
+    measurementId: "G-ENY9RHRRJM"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
 
-  // Массив вопросов
-  const questions = [
-    {
-      question: "Какого цвета бургер?",
-      answers: [
-        {
-          title: 'Стандарт',
-          url: './image/burger.png'
-        },
-        {
-          title: 'Черный',
-          url: './image/burgerBlack.png'
-        }
-      ],
-      type: 'radio'
-    },
-    {
-      question: "Из какого мяса котлета?",
-      answers: [
-        {
-          title: 'Курица',
-          url: './image/chickenMeat.png'
-        },
-        {
-          title: 'Говядина',
-          url: './image/beefMeat.png'
-        },
-        {
-          title: 'Свинина',
-          url: './image/porkMeat.png'
-        }
-      ],
-      type: 'radio'
-    },
-    {
-      question: "Дополнительные ингредиенты?",
-      answers: [
-        {
-          title: 'Помидор',
-          url: './image/tomato.png'
-        },
-        {
-          title: 'Огурец',
-          url: './image/cucumber.png'
-        },
-        {
-          title: 'Салат',
-          url: './image/salad.png'
-        },
-        {
-          title: 'Лук',
-          url: './image/onion.png'
-        }
-      ],
-      type: 'checkbox'
-    },
-    {
-      question: "Добавить соус?",
-      answers: [
-        {
-          title: 'Чесночный',
-          url: './image/sauce1.png'
-        },
-        {
-          title: 'Томатный',
-          url: './image/sauce2.png'
-        },
-        {
-          title: 'Горчичный',
-          url: './image/sauce3.png'
-        }
-      ],
-      type: 'radio'
-    }
-  ];
+  // Функция получения данных
+  const getData = () => {
+    formAnswers.textContent = 'LOAD';
+
+    nextButton.classList.add('d-none');
+    prevButton.classList.add('d-none');
+
+    setTimeout(() => {
+      firebase.database().ref().child('questions').once('value')
+        .then(snap => playTest(snap.val()))
+    }, 500);
+  }
+
 
   // Появление-исчезание кнопки-бургера (начальная проверка)
   let clientWidth = document.documentElement.clientWidth;
@@ -101,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Запуск тестирования
-  const playTest = () => {
+  const playTest = (questions) => {
 
     const finalAnswers = [];
     const obj = {};
@@ -209,6 +160,11 @@ document.addEventListener('DOMContentLoaded', function () {
       checkAnswer();
       numberQuestion++;
       renderQuestions(numberQuestion);
+      firebase
+        .database()
+        .ref()
+        .child('contacts')
+        .push(finalAnswers);
     }
   };
 
@@ -249,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
   btnOpenModal.addEventListener('click', () => {
     requestAnimationFrame(animateModal);
     modalBlock.classList.add('d-block');
-    playTest();
+    getData()
   });
 
   // Закрытие модального окна по нажатию креста в модальном окне
